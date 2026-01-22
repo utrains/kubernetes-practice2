@@ -105,4 +105,5 @@ aws eks update-kubeconfig --region region-code --name cluster-name
 ```
 
 
-**Note: The goal here is just for you to have an overview of why ad how RBAC can be set in clusters to enhance security.**
+**Note: The goal here is just for you to have an overview of why and how RBAC can be set in clusters to enhance security.**
+
