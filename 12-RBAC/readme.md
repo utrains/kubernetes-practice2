@@ -92,7 +92,7 @@ kubectl get pods --as=system:serviceaccount:dev:dev-sa
 ```
 Expected result: You should have a **Forbidden error**.
 
-Test with other resources like services, deploiements etc
+Test with other resources like services, deployments etc
 
 3. Recommendation
 
@@ -103,5 +103,6 @@ The user will add it to his local kubeconfig file in `.kube/` and update the kub
 ```bash
 aws eks update-kubeconfig --region region-code --name cluster-name
 ```
+
 
 **Note: The goal here is just for you to have an overview of why ad how RBAC can be set in clusters to enhance security.**
