@@ -63,5 +63,9 @@ kubectl get pods
 ```bash
 kubectl delete rs webserver
 ```
- 
 
+## Cleanup
+
+```bash
+kubectl delete -f replicaset-for-pods.yaml --ignore-not-found
+```

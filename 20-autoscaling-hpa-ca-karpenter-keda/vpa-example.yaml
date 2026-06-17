@@ -1,0 +1,30 @@
+# Vertical Pod Autoscaler example.
+# Requires the VPA controller to be installed in the cluster first:
+#   git clone https://github.com/kubernetes/autoscaler.git
+#   ./autoscaler/vertical-pod-autoscaler/hack/vpa-up.sh
+#
+# Update modes:
+#   Off     - VPA only reports recommendations (read with `kubectl describe vpa nginx-vpa`).
+#   Initial - applies recommendation only when the pod is first created.
+#   Auto    - actively evicts pods to resize them. CAN FIGHT HPA on the same metric.
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: nginx-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        minAllowed:
+          cpu: 50m
+          memory: 64Mi
+        maxAllowed:
+          cpu: 1
+          memory: 1Gi
+        controlledResources: ["cpu", "memory"]

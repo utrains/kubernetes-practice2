@@ -116,13 +116,15 @@ aws eks update-kubeconfig --region us-east-1 --name my-cluster
 | `kubectl get services`                           | List all services in the defaut namespace                                            |
 | `kubectl proxy`                                  | Access the Kubernetes cluster dashboard (if set up).                            |
 
-## Delete the EKS Cluster
+## Cleanup
 
-When done with practice, always delete resources to avoid further charges in the cloud. Run this command only when you are done practicing 
+When done with practice, always delete resources to avoid further charges in the cloud. Run this command only when you are done practicing.
+
 ```bash
 eksctl delete cluster --name my-cluster --region us-east-1
 ```
-After deleting the cluster, you can verify in Cloudformation that all the stacks related to the cluster creation were successfully deleted.
+
+After deleting the cluster, you can verify in CloudFormation that all the stacks related to the cluster creation were successfully deleted.
 
 
 

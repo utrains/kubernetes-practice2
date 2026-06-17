@@ -196,3 +196,11 @@ To enable autoscaling for a deployment, we need a specific object called **HPA (
 - Reduce the load (the HPA should scale down the pods)
 - Clean up (optional)
 
+## Cleanup
+
+```bash
+kubectl delete -f 01-nginx-deployment.yaml --ignore-not-found
+kubectl delete -f 02-deployment-rolling-update.yaml --ignore-not-found
+kubectl delete -f "03- deployment-recreate.yaml" --ignore-not-found
+kubectl delete -f beta-deployment.yaml --ignore-not-found
+```
