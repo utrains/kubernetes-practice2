@@ -212,34 +212,157 @@ app2.yoursomain.com
 
 ## Gateway API: the modern successor to Ingress
 
-The Kubernetes Ingress API has been around since 1.1 and is showing its age. The community's answer is the **Gateway API**, which became **GA in K8s 1.31 (mid-2024)**.
+### What is Gateway API?
 
-### What's different
+The Kubernetes Ingress API has been around since 1.1 and is showing its age. The community's answer is the **Gateway API**, a set of CRDs (`GatewayClass`, `Gateway`, `HTTPRoute`, `TCPRoute`, `GRPCRoute`, ...) that replace and extend Ingress.
 
-Instead of one overloaded `Ingress` resource, Gateway API splits responsibility across **3 resources**:
+### A brief history
 
-- **GatewayClass** — defines a class of gateways (e.g., "AWS ALB"). Maintained by the platform team.
-- **Gateway** — an actual listener (ports, protocols, TLS). Maintained by the cluster admin or app team lead.
-- **HTTPRoute** (and `TCPRoute`, `GRPCRoute`, etc.) — the routing rules. Owned by app developers.
+Ingress shipped in K8s 1.1 (2015). It worked, but every controller layered vendor-specific annotations (`nginx.ingress.kubernetes.io/...`, `alb.ingress.kubernetes.io/...`) to expose features the spec did not cover. By 2019, traffic-splitting, header-based routing, and multi-team ownership of one load balancer were universally requested and universally implemented as annotation soup. SIG-Network started the Gateway API project that year. The core resources reached **GA (v1.0) in October 2023**, and the current standard channel as of this rewrite is **v1.5.0**.
 
-This separation gives you **better support for header-based routing, weighted traffic splitting (canaries / blue-green), and multi-tenancy** out of the box — without vendor-specific annotations.
+### Why it matters
 
-### On EKS
+Gateway API splits responsibility across **3 resources** so each one has a clear owner:
 
-Install via the **`aws-load-balancer-controller` v2.7+**, which now implements **both** the Ingress API and the Gateway API. You do not need a separate controller. Once installed, you can mix Ingress and Gateway resources in the same cluster while you migrate.
+- **GatewayClass** — defines a class of gateways (e.g., "AWS ALB"). Installed by the platform team / cluster admin.
+- **Gateway** — an actual listener (ports, protocols, TLS). Owned by the cluster admin or app team lead.
+- **HTTPRoute** (or `TCPRoute`, `GRPCRoute`, etc.) — the routing rules. Owned by app developers.
 
-### Minimal HTTPRoute example
+This gives you **header-based routing, weighted traffic splitting (canaries / blue-green), and cross-namespace routing** in the spec itself, with no controller-specific annotations.
+
+### When to use vs not use it
+
+- **Stick with Ingress** for simple host/path routing on a single team's load balancer. It is still fully supported, and tooling / examples are everywhere.
+- **Move to Gateway API** when you need traffic-splitting, header-based routing, gRPC, or a clear platform-team / app-team split. New greenfield platforms in 2026 should default to Gateway API.
+
+---
+
+## Practice: Gateway API on EKS with the AWS Load Balancer Controller
+
+### Prerequisites
+
+- Same EKS cluster, ACM cert, Route 53 hosted zone, and kubeconfig as the Ingress section above.
+- **`aws-load-balancer-controller` >= v2.14.0** installed (the controller you installed earlier already implements Gateway API as long as it is on v2.14+). The L7 ALB Gateway path requires v2.14.0. The L4 NLB Gateway path requires v2.13.0+.
+- `kubectl` and `helm` available.
+
+Verify the controller version:
+
+```bash
+kubectl get deploy -n kube-system aws-load-balancer-controller \
+  -o jsonpath='{.spec.template.spec.containers[0].image}'
+# expect:  public.ecr.aws/eks/aws-load-balancer-controller:v2.14.x  (or newer)
+```
+
+If it is older, upgrade with Helm before continuing:
+
+```bash
+helm repo update eks
+helm upgrade aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=dev-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller
+```
+
+### 1. Install the Gateway API CRDs
+
+The Gateway API CRDs are **not** part of stock Kubernetes — you install them yourself. Install the standard channel from upstream:
+
+```bash
+kubectl apply --server-side -f \
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
+```
+
+> The standard channel includes the GA resources: `GatewayClass`, `Gateway`, `HTTPRoute`, `GRPCRoute`, and `ReferenceGrant`. If you also need `TCPRoute`, `UDPRoute`, or `TLSRoute` for L4 use cases, install the experimental channel instead (`experimental-install.yaml` from the same release).
+
+Verify:
+
+```bash
+kubectl get crds | grep gateway.networking.k8s.io
+# expect: gatewayclasses, gateways, grpcroutes, httproutes, referencegrants
+```
+
+### 2. Install the AWS LBC Gateway API CRDs
+
+The AWS Load Balancer Controller adds three of its own CRDs that are used to configure ALB-specific behavior on Gateways: `LoadBalancerConfiguration`, `TargetGroupConfiguration`, and `ListenerRuleConfiguration`.
+
+```bash
+kubectl apply -f \
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/refs/heads/main/config/crd/gateway/gateway-crds.yaml
+```
+
+Verify the controller picked them up — restart the controller deployment so it re-detects the CRDs, then check the logs:
+
+```bash
+kubectl rollout restart deploy/aws-load-balancer-controller -n kube-system
+kubectl logs -n kube-system deploy/aws-load-balancer-controller | grep -i gateway
+```
+
+You should see lines indicating the `ALBGatewayAPI` and `NLBGatewayAPI` controllers are enabled.
+
+### 3. IAM permissions
+
+The IAM policy you attached to the `aws-load-balancer-controller` ServiceAccount earlier (from `iam_policy.json` on the v2.11.0 release) already covers most ALB / NLB actions. For Gateway API, AWS recommends pulling the **latest** policy from the controller release matching your installed version:
+
+```bash
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.14.0/docs/install/iam_policy.json
+aws iam create-policy \
+  --policy-name AWSLoadBalancerControllerIAMPolicyV2_14 \
+  --policy-document file://iam_policy.json
+```
+
+Then update the IRSA role to point at the new policy ARN (or attach it alongside the old one). If you originally created the role with `eksctl create iamserviceaccount`, the easiest path is to re-run the same command with `--override-existing-serviceaccounts` and the new policy ARN.
+
+### 4. Sample workload
+
+Reuse `app1` from the Ingress section above. If you cleaned up, re-apply:
+
+```bash
+kubectl apply -f app1.yaml
+```
+
+### 5. The Gateway + HTTPRoute manifests
 
 ```yaml
+# gatewayclass.yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: alb
+spec:
+  controllerName: gateway.k8s.aws/alb        # The AWS LBC's ALB Gateway controller
+```
+
+```yaml
+# gateway.yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: alb
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same                          # only Routes from the same namespace can attach
+```
+
+```yaml
+# httproute.yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: app1-route
+  namespace: default
 spec:
   parentRefs:
-    - name: my-gateway          # the Gateway this route attaches to
+    - name: my-gateway                        # attach to the Gateway above
   hostnames:
-    - app1.example.com
+    - app1.awscertif.site                     # replace with your subdomain
   rules:
     - matches:
         - path:
@@ -250,17 +373,48 @@ spec:
           port: 80
 ```
 
-### When to choose Ingress vs Gateway API in 2026
-
-- **Stick with Ingress** for simple host/path routing where you don't need traffic splitting or multiple teams sharing a single load balancer. It's still fully supported and the docs / examples are everywhere.
-- **Move to Gateway API** when you need traffic-splitting (canaries, A/B), header-based routing, mTLS, or a clear platform-team / app-team split (multi-tenancy). New greenfield platforms in 2026 should default to Gateway API.
-
-## Cleanup
+### 6. Apply + verify
 
 ```bash
-kubectl delete -f ingress.yaml
+kubectl apply -f gatewayclass.yaml
+kubectl apply -f gateway.yaml
+kubectl apply -f httproute.yaml
+
+kubectl get gatewayclass
+kubectl get gateway
+kubectl get httproute
+```
+
+The Gateway will eventually show an address (the provisioned ALB DNS name) in the `ADDRESS` column. Describe it for status conditions:
+
+```bash
+kubectl describe gateway my-gateway
+# look for "Accepted: True" and "Programmed: True" under Listener Status
+```
+
+Then create / update the Route 53 record so `app1.awscertif.site` points to the ALB DNS shown by `kubectl get gateway my-gateway`.
+
+### 7. Test
+
+```bash
+curl http://app1.awscertif.site
+# or open it in a browser
+```
+
+### 8. Cleanup
+
+```bash
+kubectl delete -f httproute.yaml
+kubectl delete -f gateway.yaml
+kubectl delete -f gatewayclass.yaml
 kubectl delete -f app1.yaml
-kubectl delete -f app2.yaml
-# Optional: uninstall the ALB controller if you are done with EKS practice
+
+# Optional: remove the Gateway API CRDs (only do this if nothing else uses them)
+kubectl delete -f \
+  https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/refs/heads/main/config/crd/gateway/gateway-crds.yaml
+kubectl delete -f \
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
+
+# Optional: uninstall the ALB controller if you are done with the cluster
 helm uninstall aws-load-balancer-controller -n kube-system
 ```
