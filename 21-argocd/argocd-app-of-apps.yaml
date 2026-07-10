@@ -1,0 +1,43 @@
+# The App-of-Apps pattern: ONE root Application manages MANY child Applications.
+#
+# Why this exists:
+#   - You do not want to run "kubectl apply" for every new team/service Application manifest.
+#   - Put all your Application manifests in a git folder (e.g. apps/).
+#   - Create a root Application that points at that folder.
+#   - The root Application creates + manages every child Application automatically.
+#   - Add a new team? Just add their Application manifest to apps/ and commit. ArgoCD picks it up.
+#
+# Repo layout expected:
+#   apps/
+#     team-a-web.yaml       (Application manifest)
+#     team-a-worker.yaml    (Application manifest)
+#     platform-monitoring.yaml (Application manifest)
+#
+# Apply with:  kubectl apply -f argocd-app-of-apps.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/utrains/kubernetes-practice2.git
+    targetRevision: main
+    # Point at a git folder that contains ONLY Application manifests.
+    path: 21-argocd/child-apps
+
+  destination:
+    server: https://kubernetes.default.svc
+    # Child Application resources live in the argocd namespace so ArgoCD can manage them.
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      # If a child Application is deleted from git, ArgoCD deletes it from the cluster.
+      prune: true
+      # If someone hand-edits an Application, ArgoCD reverts it to what git says.
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

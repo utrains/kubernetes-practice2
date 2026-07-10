@@ -1,0 +1,23 @@
+# Scenario 3: Liveness probe hits a port the container is not listening on.
+# STATUS you should see: cycles through Running, then CrashLoopBackOff.
+# Use: kubectl describe pod broken-03
+# Look at the Events for "Liveness probe failed".
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broken-03
+  labels:
+    scenario: wrong-probe-port
+spec:
+  containers:
+    - name: web
+      image: nginx:1.27
+      ports:
+        - containerPort: 80
+      livenessProbe:
+        httpGet:
+          path: /
+          port: 9999          # nginx listens on 80, not 9999. Every probe check fails.
+        initialDelaySeconds: 3
+        periodSeconds: 5
+        failureThreshold: 3

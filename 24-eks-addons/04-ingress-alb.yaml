@@ -1,0 +1,36 @@
+# An Ingress that provisions a real AWS Application Load Balancer.
+#
+# Prereq: AWS Load Balancer Controller installed (see 03-alb-controller-install.sh).
+#
+# What this does:
+#   - alb.ingress.kubernetes.io/scheme: internet-facing ==> public ALB.
+#   - alb.ingress.kubernetes.io/target-type: ip         ==> routes directly to Pod IPs (works with Fargate too).
+#   - Path /app1 goes to app1-service, /app2 to app2-service.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alb-demo
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /app1
+            pathType: Prefix
+            backend:
+              service:
+                name: app1-service
+                port:
+                  number: 80
+          - path: /app2
+            pathType: Prefix
+            backend:
+              service:
+                name: app2-service
+                port:
+                  number: 80

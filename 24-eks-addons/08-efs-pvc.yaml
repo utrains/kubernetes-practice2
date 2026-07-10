@@ -1,0 +1,35 @@
+# A PVC + a Deployment with 3 replicas ALL mounting the same EFS volume.
+# This demonstrates the value of EFS: many Pods, one shared filesystem, cross-AZ.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uploads
+spec:
+  accessModes: [ReadWriteMany]         # EFS supports RWX across many Pods.
+  storageClassName: efs-shared
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uploads-frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: uploads-frontend }
+  template:
+    metadata:
+      labels: { app: uploads-frontend }
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          volumeMounts:
+            - name: uploads
+              mountPath: /usr/share/nginx/html/uploads
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: uploads

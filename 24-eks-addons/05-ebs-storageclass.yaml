@@ -1,0 +1,19 @@
+# StorageClass for EBS gp3 volumes.
+# Prereq: aws-ebs-csi-driver addon installed.
+# volumeBindingMode: WaitForFirstConsumer  ==>
+#   the volume is created in the SAME AZ as the Pod that will use it.
+#   Critical for EBS: if you provision the volume before the Pod is scheduled,
+#   the volume might end up in an AZ where the Pod cannot run.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: "true"
+  fsType: ext4
