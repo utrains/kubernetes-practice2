@@ -1,0 +1,19 @@
+# Scenario 2: Pod references a ConfigMap that does not exist.
+# STATUS you should see: CreateContainerConfigError.
+# Use: kubectl describe pod broken-02
+# Read the Events section. It tells you exactly which ConfigMap or key is missing.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broken-02
+  labels:
+    scenario: missing-configmap
+spec:
+  containers:
+    - name: web
+      image: nginx:1.27
+      envFrom:
+        - configMapRef:
+            name: app-config       # This ConfigMap does not exist in the namespace.
+      ports:
+        - containerPort: 80

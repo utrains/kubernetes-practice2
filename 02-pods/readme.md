@@ -272,3 +272,28 @@ Example: Check the files `10-pod-priotity-class.yaml` and `11-pod-with-priority.
 - The `10-pod-priotity-class.yaml` file creates two priority classes 
 - The `11-pod-with-priority.yaml` manifest creates two pods from each priority class
 
+## Cleanup
+
+```bash
+# Simple pods
+kubectl delete -f 01-simple-pod.yaml --ignore-not-found
+kubectl delete -f 02-pod-namespace.yaml --ignore-not-found
+kubectl delete -f 03-pod-with-port.yaml --ignore-not-found
+
+# QoS pods
+kubectl delete -f 04-pod-qos-besteffort.yaml --ignore-not-found
+kubectl delete -f 05-pod-qos-burstable.yaml --ignore-not-found
+kubectl delete -f 06-pod-qos-guaranteed.yaml --ignore-not-found
+
+# Probes
+kubectl delete -f 07-pod-liveness-probe.yaml --ignore-not-found
+kubectl delete -f 08-pod-readiness-probe.yaml --ignore-not-found
+kubectl delete -f 09-pod-startup-probe.yaml --ignore-not-found
+
+# Priority class + pods (delete pods first, then class)
+kubectl delete -f 11-pod-with-priority.yaml --ignore-not-found
+kubectl delete -f 10-pod-priority-class.yaml --ignore-not-found
+
+# If you created the dev namespace for these labs
+kubectl delete ns dev --ignore-not-found
+```

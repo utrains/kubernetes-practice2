@@ -1,0 +1,30 @@
+# A PVC + Pod using the EBS gp3 StorageClass.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+spec:
+  accessModes: [ReadWriteOnce]        # EBS is single-node access.
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres
+spec:
+  containers:
+    - name: postgres
+      image: postgres:16-alpine
+      env:
+        - name: POSTGRES_PASSWORD
+          value: change-me-in-production
+      volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: postgres-data

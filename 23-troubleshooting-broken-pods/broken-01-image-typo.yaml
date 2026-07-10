@@ -1,0 +1,16 @@
+# Scenario 1: Image tag typo.
+# STATUS you should see: ImagePullBackOff (or ErrImagePull).
+# Use: kubectl describe pod broken-01
+# Find the fix in the Events section.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broken-01
+  labels:
+    scenario: image-typo
+spec:
+  containers:
+    - name: web
+      image: nginx:1.27.999   # This tag does not exist. Real tags: 1.27, 1.27.1, latest.
+      ports:
+        - containerPort: 80

@@ -1,0 +1,52 @@
+# KEDA ScaledObject pointed at an AWS SQS queue.
+# Requires KEDA to be installed first:
+#   helm repo add kedacore https://kedacore.github.io/charts
+#   helm install keda kedacore/keda --namespace keda --create-namespace
+#
+# The Deployment "sqs-consumer" should already exist and be a worker that reads
+# from the queue. KEDA will scale it 0..10 based on queue depth.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: keda-aws-credentials
+  namespace: default
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: <YOUR_ACCESS_KEY>
+  AWS_SECRET_ACCESS_KEY: <YOUR_SECRET_KEY>
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-aws-auth
+  namespace: default
+spec:
+  secretTargetRef:
+    - parameter: awsAccessKeyID
+      name: keda-aws-credentials
+      key: AWS_ACCESS_KEY_ID
+    - parameter: awsSecretAccessKey
+      name: keda-aws-credentials
+      key: AWS_SECRET_ACCESS_KEY
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sqs-consumer-scaler
+  namespace: default
+spec:
+  scaleTargetRef:
+    name: sqs-consumer        # the Deployment KEDA will scale
+  minReplicaCount: 0           # scale to zero when the queue is empty
+  maxReplicaCount: 10
+  pollingInterval: 15          # check the queue every 15s
+  cooldownPeriod: 60           # wait 60s of no work before scaling down
+  triggers:
+    - type: aws-sqs-queue
+      authenticationRef:
+        name: keda-aws-auth
+      metadata:
+        queueURL: https://sqs.us-east-1.amazonaws.com/<YOUR_ACCOUNT_ID>/my-work-queue
+        queueLength: "5"      # target: 5 messages per replica
+        awsRegion: us-east-1

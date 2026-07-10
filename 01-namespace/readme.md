@@ -51,3 +51,10 @@ To delete the namespace, run the command `kubectl delete ns <name>` as follows:
 ```bash
 kubectl delete ns dev
 ```
+
+## Cleanup
+
+```bash
+kubectl delete -f namespace.yaml --ignore-not-found
+kubectl delete ns dev --ignore-not-found
+```

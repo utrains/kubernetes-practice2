@@ -100,3 +100,45 @@ The repo is organized and ordered for you to practice the concepts progressively
 In each folder, you will find a readme file to help you understand the concept and practice.
 
 **Note**: All the files mentioned in the **readme** can be directly found in the same folder. Just use the content of those files if no other specification is given.
+
+## Chapter index
+
+**25 numbered chapters** that walk from "what is a pod" through "GitOps, custom operators, broken-Pod triage, and EKS-specific add-ons." Click any chapter name to jump to its walkthrough.
+
+| # | Chapter | What you will practice |
+|---|---|---|
+| 00 | [Cluster setup](./00-cluster-setup/readme.md) | Install `kubectl`, `eksctl`, and `helm`. Pick your practice environment: a free Killercoda sandbox, a local Docker Desktop / Kind cluster, or a real AWS EKS cluster stood up with `eksctl`. |
+| 01 | [Namespace](./01-namespace/readme.md) | Create isolated namespaces, switch context between them, and see how the same object name can live in multiple namespaces without conflict. |
+| 02 | [Pods](./02-pods/readme.md) | Deploy Pods from YAML and from `kubectl run`. Set QoS classes (BestEffort, Burstable, Guaranteed). Wire up liveness, readiness, and startup probes. Assign PriorityClasses so critical Pods never get evicted. |
+| 03 | [ReplicaSet](./03-replicaset/readme.md) | Create a ReplicaSet, watch it heal Pod deletions, and understand why you almost never write one directly (a Deployment creates one for you). |
+| 04 | [Deployment](./04-deployment/readme.md) | Roll out a new image version with zero downtime using the RollingUpdate strategy, then flip to Recreate and see the outage. Roll back to a previous revision with `kubectl rollout undo`. |
+| 05 | [Jobs + CronJobs](./05-jobs-cronjobs/readme.md) | Run one-off batch work with a Job. Schedule recurring work every minute with a CronJob. Set `backoffLimit` and `activeDeadlineSeconds` for safety. |
+| 06 | [Service](./06-service/readme.md) | Expose Pods with all four Service types: ClusterIP (internal), NodePort (node port on every node), LoadBalancer (cloud LB), ExternalName (DNS alias to an external host). |
+| 07 | [Ingress + Gateway API](./07-ingress-and-gateway-api/readme.md) | Route traffic to many Services behind one Ingress with path-based rules. Then compare to the modern Gateway API and see when to reach for each. |
+| 08 | [Cluster UIs: Lens, OpenLens, k9s](./08-cluster-uis-lens-openlens-k9s/readme.md) | Install the terminal UI `k9s` and the desktop UIs OpenLens (free) or Lens Desktop. Understand when a GUI beats `kubectl` in day-to-day work. |
+| 09 | [ConfigMap](./09-configmap/readme.md) | Store non-secret configuration as key/value data. Consume it inside a Pod as environment variables, command-line args, or mounted files. |
+| 10 | [Secrets](./10-secrets/readme.md) | Store passwords and API tokens. Mount them into Pods as environment variables or files. Understand what base64 encoding does and does NOT protect you from. |
+| 11 | [DaemonSet](./11-daemonset/readme.md) | Run one Pod per node with a DaemonSet: a node-exporter for Prometheus metrics and a Fluentd log collector. |
+| 12 | [Advanced scheduling](./12-advanced-scheduling/readme.md) | Control which node a Pod lands on with nodeSelector, node affinity, Pod affinity / anti-affinity, taints and tolerations, and topology spread constraints. |
+| 13 | [Persistent storage](./13-persistent-storage/readme.md) | Provision persistent storage with PersistentVolume, PersistentVolumeClaim, and StorageClass. See the difference between static and dynamic provisioning. |
+| 14 | [RBAC](./14-rbac/readme.md) | Create a ServiceAccount, bind it to a Role or ClusterRole, and prove that Pods using that SA can only do what the Role allows. |
+| 15 | [Network policy](./15-network-policy/readme.md) | Start from the default-allow-everything state, apply a default-deny policy, then explicitly allow just the traffic your app needs. |
+| 16 | [Security context](./16-security-context/readme.md) | Harden a Pod: run as non-root, mount root filesystem read-only, drop ALL Linux capabilities, block privilege escalation. Optional cluster-wide guardrail with PodSecurityAdmission. |
+| 17 | [Resource quota](./17-resource-quota/readme.md) | Cap total CPU / memory / pod count per namespace with ResourceQuota. Cap per-Pod usage and set defaults with LimitRange. |
+| 18 | [Cluster maintenance + troubleshooting](./18-cluster-maintenance-and-troubleshooting/readme.md) | Cordon and drain a node without dropping traffic. Back up etcd. Walk through EKS maintenance scenarios: rolling worker upgrades, Kubernetes version upgrades, PDBs for high availability. |
+| 19 | [Helm](./19-helm/readme.md) | Install, upgrade, roll back, and uninstall Helm charts. Understand the `values.yaml` override pattern. |
+| 20 | [Autoscaling: HPA / CA / Karpenter / KEDA](./20-autoscaling-hpa-ca-karpenter-keda/readme.md) | Scale Pods horizontally on CPU with HPA. Scale Pods vertically with VPA in recommendation mode. Scale nodes with Cluster Autoscaler and the modern replacement Karpenter. Scale on custom events (SQS depth, Kafka lag) with KEDA. |
+| 21 | [ArgoCD (GitOps)](./21-argocd/readme.md) | Install ArgoCD, wire an Application to a git repo, watch sync + drift detection, and then structure many apps with an AppProject and the App-of-Apps pattern. |
+| 22 | [CRDs + Operators](./22-crds-and-operators/readme.md) | Install cert-manager (a real-world Operator) and use its CRDs (Issuer, Certificate) to auto-provision TLS certs. Recognize the CRD + Operator pattern that every serious K8s tool ships as. |
+| 23 | [Troubleshooting: broken Pods](./23-troubleshooting-broken-pods/readme.md) | Diagnose 5 pre-broken Pod manifests using the `describe → events → logs → exec` playbook. Covers ImagePullBackOff, CreateContainerConfigError, CrashLoopBackOff, OOMKilled, and the Service-selector-mismatch trap. |
+| 24 | [EKS add-ons](./24-eks-addons/readme.md) | AWS-native practice: IRSA + Pod Identity for Pod IAM, AWS Load Balancer Controller for real ALBs, EBS CSI for block storage, EFS CSI for shared filesystems, Fargate for serverless Pods. |
+| — | [Labs-projects](./Labs-projects/README.md) | Capstone labs that combine many concepts into one end-to-end app: PHP + Redis Guestbook, WordPress + MySQL with persistent volumes. |
+
+## Cohort week mapping
+
+This repo is sequenced to match the DevOps program's Kubernetes weeks.
+
+- **Week 20 (K8s Foundations)** - chapters **00-10** (cluster setup -> secrets). Focus: install, basic objects, services + ingress, config + secrets.
+- **Week 21 (EKS Migration + K8s Production prep)** - chapters **11-17** (daemonset -> resource-quota). Focus: scheduling, storage, RBAC, network policy, security context, quotas.
+- **Week 22 (K8s Production + GitOps)** - chapters **18-22** (maintenance -> CRDs/operators). Focus: cluster ops, Helm, autoscaling, ArgoCD, CRDs.
+- **Cross-week hiring-prep** - chapters **23-24**. Broken-Pod triage playbook (23) and EKS-specific add-ons: IRSA, Pod Identity, ALB Controller, EBS/EFS CSI, Fargate (24).
