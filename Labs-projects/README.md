@@ -19,4 +19,4 @@ Do them in order. Each lab assumes you already went through the numbered chapter
 
 ## What comes next
 
-The numbered chapters teach one concept at a time (Pod, Deployment, Service, and so on). The labs bring those concepts together into shippable apps. After finishing Labs 1 and 2, you should be able to describe in a hiring conversation how you would deploy any 3-tier web app on Kubernetes end-to-end.
+The numbered chapters teach one concept at a time (Pod, Deployment, Service, and so on). The labs bring those concepts together into shippable apps. After finishing Labs 1 and 2, you should be able to describe how you would deploy any 3-tier web app on Kubernetes end-to-end.

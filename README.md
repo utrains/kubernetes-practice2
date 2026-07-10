@@ -141,4 +141,4 @@ This repo is sequenced to match the DevOps program's Kubernetes weeks.
 - **Week 20 (K8s Foundations)** - chapters **00-10** (cluster setup -> secrets). Focus: install, basic objects, services + ingress, config + secrets.
 - **Week 21 (EKS Migration + K8s Production prep)** - chapters **11-17** (daemonset -> resource-quota). Focus: scheduling, storage, RBAC, network policy, security context, quotas.
 - **Week 22 (K8s Production + GitOps)** - chapters **18-22** (maintenance -> CRDs/operators). Focus: cluster ops, Helm, autoscaling, ArgoCD, CRDs.
-- **Cross-week hiring-prep** - chapters **23-24**. Broken-Pod triage playbook (23) and EKS-specific add-ons: IRSA, Pod Identity, ALB Controller, EBS/EFS CSI, Fargate (24).
+- **Cross-week production practice** - chapters **23-24**. Broken-Pod triage playbook (23) and EKS-specific add-ons: IRSA, Pod Identity, ALB Controller, EBS/EFS CSI, Fargate (24).

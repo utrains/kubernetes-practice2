@@ -1,6 +1,6 @@
 # Troubleshooting: Broken Pod Triage
 
-Every K8s hiring conversation includes some version of "walk me through debugging a stuck Pod." Reading about it is not the same as doing it. This chapter gives you 5 pre-broken Pod manifests. You apply each one, diagnose the failure from `kubectl describe` + `kubectl logs`, and fix it. Solutions are at the bottom of this README.
+Debugging a stuck Pod is something you will do many times a week in production. Reading about it is not the same as doing it. This chapter gives you 5 pre-broken Pod manifests. You apply each one, diagnose the failure from `kubectl describe` + `kubectl logs`, and fix it. Solutions are at the bottom of this README.
 
 ## The debug playbook (memorize the ORDER, not the syntax)
 
@@ -74,7 +74,7 @@ kubectl create configmap app-config --from-literal=APP_MODE=production
 
 Fix (option B): remove the ConfigMap reference from the manifest if the app does not need it.
 
-The interview follow-up: "what if the ConfigMap exists but a KEY inside it is missing?" Then STATUS is still `CreateContainerConfigError` and the Events say `couldn't find key <key> in ConfigMap`.
+Related edge case: what if the ConfigMap exists but a KEY inside it is missing? Then STATUS is still `CreateContainerConfigError` and the Events say `couldn't find key <key> in ConfigMap`.
 </details>
 
 ### Scenario 3: broken-03-wrong-probe-port.yaml
@@ -92,7 +92,7 @@ Root cause: the liveness probe is set to hit port `9999` but nginx listens on po
 
 Fix: change `port: 9999` to `port: 80` in the livenessProbe stanza.
 
-The interview follow-up: "why does the Pod show 1 restart, then 2, then 3, then 5, then wait longer between restarts?" Because kubelet uses exponential backoff on CrashLoopBackOff. First retry after 10s, then 20, 40, 80, up to 5 minutes.
+Worth knowing: why does the Pod show 1 restart, then 2, then 3, then 5, then wait longer between restarts? Because kubelet uses exponential backoff on CrashLoopBackOff. First retry after 10s, then 20, 40, 80, up to 5 minutes.
 </details>
 
 ### Scenario 4: broken-04-oom.yaml
@@ -112,7 +112,7 @@ Fix (option A): raise the memory limit to `256Mi` or whatever the app actually n
 
 Fix (option B): fix the app to use less memory. Usually the app is fine and the limit was set too low.
 
-The interview follow-up: "how do you find the right memory limit?" Run the app for a week without limits (or with generous limits), watch actual usage with `kubectl top`, then set limits at roughly p99 of observed usage plus 20% buffer. Or use VPA in recommendation-only mode.
+The real question: how do you find the right memory limit? Run the app for a week without limits (or with generous limits), watch actual usage with `kubectl top`, then set limits at roughly p99 of observed usage plus 20% buffer. Or use VPA in recommendation-only mode.
 </details>
 
 ### Scenario 5: broken-05-service-selector-mismatch.yaml

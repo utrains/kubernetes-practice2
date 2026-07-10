@@ -1,6 +1,6 @@
 # EKS Add-ons: IRSA, Pod Identity, ALB Controller, EBS CSI, EFS CSI, Fargate
 
-These are the AWS-side add-ons that turn a bare EKS cluster into a production-ready one. Every real EKS cluster has some subset of these. In a hiring conversation you should be able to explain what each one does and when you would install it.
+These are the AWS-side add-ons that turn a bare EKS cluster into a production-ready one. Every real EKS cluster has some subset of these. You should be able to explain what each one does and when you would install it.
 
 This chapter shows the install commands, the manifests, and the AWS-side setup. You need an actual EKS cluster to run these (see chapter 00 for cluster setup).
 
