@@ -1,0 +1,50 @@
+# An ArgoCD AppProject: a logical group of Applications with shared policy.
+#
+# Why AppProjects matter:
+#   - Restrict which git repos an Application can pull from (source restriction).
+#   - Restrict which namespaces + clusters an Application can deploy to (destination restriction).
+#   - Assign RBAC roles for who can sync, override, or delete Applications in this project.
+#
+# Common pattern: one AppProject per team (team-a, team-b, platform, ...).
+#
+# Apply with:  kubectl apply -f argocd-appproject.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-a
+  namespace: argocd
+spec:
+  description: "AppProject for team-a. Restricts source repos + destination namespaces."
+
+  # Which git repos this project's Applications may pull from.
+  sourceRepos:
+    - https://github.com/utrains/kubernetes-practice2.git
+    - https://github.com/team-a/charts.git
+
+  # Which cluster + namespace destinations this project's Applications may deploy to.
+  destinations:
+    - namespace: team-a-dev
+      server: https://kubernetes.default.svc
+    - namespace: team-a-prod
+      server: https://kubernetes.default.svc
+
+  # Which K8s resource kinds this project may create at the cluster scope.
+  # Empty = none. Keep tight for team projects; only platform projects should touch cluster-scoped resources.
+  clusterResourceWhitelist: []
+
+  # Which namespaced resource kinds this project may create.
+  # Empty means all standard namespaced resources are allowed.
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  # Optional: RBAC role bindings scoped to this project.
+  # Example: give the team-a-devs group sync permission on their own Applications.
+  roles:
+    - name: team-a-devs
+      description: "Developers on team-a can sync their own applications."
+      policies:
+        - p, proj:team-a:team-a-devs, applications, sync, team-a/*, allow
+        - p, proj:team-a:team-a-devs, applications, get, team-a/*, allow
+      groups:
+        - team-a-devs

@@ -15,6 +15,44 @@ Most of the practice in this repository can be done using kubernetes playgrounds
 
 **Important note**: Use the vi editor in the playground to create your files. Also remember to use `CTRL + Shift + C` to copy and `CTRL + Shift + V` to paste if the CTRL + C does not work.
 
+## Kubernetes on Docker Desktop (local practice)
+
+If you already have Docker Desktop installed on your Mac or Windows machine, you get a single-node Kubernetes cluster for free. No extra install, no cloud account, no billing worries. Perfect for chapters 00 through 10.
+
+### How to enable it
+
+1. Open **Docker Desktop**.
+2. Click the gear icon (top-right) to open **Settings**.
+3. Go to the **Kubernetes** tab in the left sidebar.
+4. Check the box **"Enable Kubernetes"**.
+5. Click **Apply & Restart**. Docker Desktop downloads the Kubernetes images and starts a single-node control plane. First-time setup takes 3 to 5 minutes.
+6. When the status indicator (bottom-left of Docker Desktop) turns green and shows **"Kubernetes is running"**, you are ready.
+
+### Verify it works
+
+Open a terminal and run:
+
+```bash
+kubectl config use-context docker-desktop
+kubectl get nodes
+```
+
+You should see one node named `docker-desktop` with status `Ready`.
+
+### When to use vs Killercoda vs EKS
+
+- **Docker Desktop Kubernetes**: fast local iteration. No internet needed once it is running. Best for chapters 00 to 10.
+- **Killercoda**: no local install required. Best for quick classroom demos or if your laptop cannot run Docker Desktop.
+- **EKS**: real cloud practice. Required for chapters that need real EBS/EFS storage, ALB Ingress, IAM for Pods, or DaemonSet on multiple nodes.
+
+### Reset the cluster (if something goes wrong)
+
+Docker Desktop lets you reset the K8s cluster from Settings > Kubernetes > **"Reset Kubernetes Cluster"**. This wipes all Pods, Services, and configurations and gives you a clean slate.
+
+### Turn it off when done
+
+Docker Desktop's Kubernetes uses a chunk of CPU and RAM even when idle. Turn it off (uncheck the "Enable Kubernetes" box) when you are not practicing to give your laptop back its resources.
+
 ## Setup EKS cluster using eksctl
 There are various ways to setup kubernetes cluster. For this class, we will setup a kubernetes cluster in EKS using eksctl.
 This is the production ready cluster we will use throughout the course.

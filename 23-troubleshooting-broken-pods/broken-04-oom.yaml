@@ -1,0 +1,21 @@
+# Scenario 4: Memory limit too tight. The Linux kernel OOM killer terminates the container.
+# STATUS you should see: OOMKilled (under Last State in kubectl describe).
+# Use: kubectl describe pod broken-04
+# Look for "Last State: Terminated, Reason: OOMKilled".
+apiVersion: v1
+kind: Pod
+metadata:
+  name: broken-04
+  labels:
+    scenario: oom
+spec:
+  containers:
+    - name: memhog
+      image: polinux/stress:latest
+      command: ["stress"]
+      args: ["--vm", "1", "--vm-bytes", "100M", "--vm-hang", "1"]
+      resources:
+        limits:
+          memory: "20Mi"       # Container tries to allocate 100Mi with a 20Mi cap. OOMKilled.
+        requests:
+          memory: "10Mi"

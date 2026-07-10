@@ -1,0 +1,16 @@
+# StorageClass for EFS.
+# Prereq: aws-efs-csi-driver addon installed, EFS filesystem created in the VPC,
+# mount targets created in each AZ subnet.
+#
+# REPLACE fs-XXXXXXXX with your real EFS filesystem ID.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-shared
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap             # Uses EFS Access Points for isolation per PVC.
+  fileSystemId: fs-XXXXXXXX            # <== replace with your EFS ID
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
