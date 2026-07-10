@@ -1,0 +1,39 @@
+# Scenario 5: Everything LOOKS fine but nothing works.
+# Deployment Pods run happily, Service exists, but curl times out.
+# The Service selector does not match the Pod labels ==> Service has 0 endpoints.
+#
+# STATUS: all Pods Running. Service exists. curl hangs.
+# The debug move: kubectl get endpoints web
+# Output: ENDPOINTS <none>  (this is the tell)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-05
+  labels:
+    scenario: selector-mismatch
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web        # Deployment selects Pods with label app=web
+  template:
+    metadata:
+      labels:
+        app: web      # Pods have label app=web
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector:
+    app: webserver    # Service looks for Pods with label app=webserver. Mismatch. 0 endpoints.
+  ports:
+    - port: 80
+      targetPort: 80
